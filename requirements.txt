@@ -1,0 +1,11 @@
+pygame>=2.1.0
+mediapipe>=0.8.10
+opencv-python>=4.5.5
+PyPDF2>=2.10.0
+pdf2image>=1.16.0
+Pillow>=9.0.0
+requests>=2.27.1
+numpy>=1.22.0
+python-dotenv>=0.19.2
+poppler-utils>=0.1.0
+fpdf2>=2.7.4 

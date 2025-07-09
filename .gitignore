@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -129,10 +130,9 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
-env/
 venv/
 ENV/
+env/
 env.bak/
 venv.bak/
 
@@ -170,5 +170,25 @@ cython_debug/
 # Ruff stuff:
 .ruff_cache/
 
-# PyPI configuration file
-.pypirc
+# Python
+__pycache__/*.py[cod]*$py.class*.so.Pythonenv/build/develop-eggs/dist/downloads/eggs/.eggs/lib/lib64/parts/sdist/var/*.egg-info/.installed.cfg*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+*.csv
+
+# Application specific
+gesture_log.csv
+app_stats.csv
+Lectii/*.txt
