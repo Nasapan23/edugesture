@@ -419,15 +419,136 @@ def main():
     parser.add_argument("--camera", type=int, default=0, help="ID-ul camerei (implicit: 0)")
     parser.add_argument("--ollama-host", type=str, default="http://localhost:11434", help="Host-ul Ollama (implicit: http://localhost:11434)")
     parser.add_argument("--ollama-model", type=str, default="llama3.2:1b", help="Modelul Ollama (implicit: llama3.2:1b)")
+    parser.add_argument("--debug", action="store_true", help="Pornește în modul debug cu simulare utilizatori")
+    parser.add_argument("--debug-users", type=int, default=10, help="Numărul de utilizatori simulați (implicit: 10)")
     args = parser.parse_args()
     
-    # Create and run the application
-    app = EduGesture(
-        ollama_host=args.ollama_host,
-        ollama_model=args.ollama_model
-    )
-    app.camera_id = args.camera
-    app.run()
+    if args.debug:
+        # Run debug mode
+        run_debug_mode(args.debug_users)
+    else:
+        # Create and run the normal application
+        app = EduGesture(
+            ollama_host=args.ollama_host,
+            ollama_model=args.ollama_model
+        )
+        app.camera_id = args.camera
+        app.run()
+
+
+def run_debug_mode(num_users: int = 10):
+    """Run the application in debug mode with user simulation"""
+    try:
+        import pygame
+        from debug_simulator import DebugSimulator
+        from debug_ui import DebugUI
+        
+        print("🐛 Starting EduGesture in DEBUG MODE")
+        print(f"👥 Simulating {num_users} users")
+        print("=" * 50)
+        
+        # Initialize debug components
+        simulator = DebugSimulator(num_users=num_users)
+        debug_ui = DebugUI()
+        debug_ui.initialize()
+        
+        # Control variables
+        simulation_running = False
+        last_export_time = 0
+        
+        print("🎮 Debug Controls:")
+        print("  [S] - Start/Stop Simulation")
+        print("  [E] - Export Results")
+        print("  [R] - Reset Simulation")
+        print("  [Q] - Quit Debug Mode")
+        print("=" * 50)
+        
+        running = True
+        while running:
+            # Handle events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        running = False
+                        
+                    elif event.key == pygame.K_s:
+                        if not simulation_running:
+                            print("🚀 Starting user simulation...")
+                            simulator.start_simulation()
+                            simulation_running = True
+                        else:
+                            print("🛑 Stopping user simulation...")
+                            simulator.stop_simulation()
+                            simulation_running = False
+                    
+                    elif event.key == pygame.K_e:
+                        if simulator.user_actions:
+                            print("📊 Exporting simulation results...")
+                            actions_file, summary_file = simulator.export_results()
+                            print(f"✅ Results exported successfully!")
+                            last_export_time = time.time()
+                        else:
+                            print("⚠️  No data to export. Start simulation first.")
+                    
+                    elif event.key == pygame.K_r:
+                        print("🔄 Resetting simulation...")
+                        if simulation_running:
+                            simulator.stop_simulation()
+                            simulation_running = False
+                        
+                        # Create new simulator
+                        simulator = DebugSimulator(num_users=num_users)
+                        print("✅ Simulation reset complete")
+            
+            # Get current stats
+            stats = simulator.get_real_time_stats() if simulation_running else {}
+            
+            # Update debug UI
+            debug_ui.update(stats)
+            
+            # Auto-export every 5 minutes if simulation is running
+            current_time = time.time()
+            if (simulation_running and 
+                current_time - last_export_time > 300 and  # 5 minutes
+                simulator.user_actions):
+                print("📊 Auto-exporting results (5 min interval)...")
+                simulator.export_results()
+                last_export_time = current_time
+        
+        # Cleanup
+        if simulation_running:
+            print("🛑 Stopping simulation...")
+            simulator.stop_simulation()
+        
+        print("🧹 Cleaning up debug mode...")
+        debug_ui.cleanup()
+        
+        # Final export if there's data
+        if simulator.user_actions:
+            print("📊 Final export of results...")
+            actions_file, summary_file = simulator.export_results()
+            
+            # Show summary
+            stats = simulator.get_real_time_stats()
+            print("\n" + "=" * 50)
+            print("📈 DEBUG SESSION SUMMARY")
+            print("=" * 50)
+            print(f"⏱️  Total Time: {stats.get('simulation_time', 0):.1f} seconds")
+            print(f"🎯 Total Actions: {stats.get('total_actions', 0)}")
+            print(f"✅ Overall Accuracy: {stats.get('overall_accuracy', 0):.1f}%")
+            print(f"👥 Active Users: {stats.get('active_users', 0)}/{num_users}")
+            print(f"📊 Results saved to: {summary_file}")
+            print("=" * 50)
+        
+    except ImportError as e:
+        print(f"❌ Error: Debug mode requires additional dependencies: {e}")
+        print("💡 Make sure debug_simulator.py and debug_ui.py are available")
+    except Exception as e:
+        print(f"❌ Debug mode error: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
